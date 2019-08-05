@@ -50,22 +50,13 @@ class Picture {
 	}
 
 	get name() {
-		// TODO: use circles to make name
-		// if (this.circles.length > 0) {
-		// 	return this.circles.length + '{}';
-		// } else {
-		// 	return '';
-		// }
-
-
-		//
-		console.log('--NAME--')
 		let subPictures = [];
 		for (let circle of this.circles) {
-			let currentSubPic;
+			// let currentSubPic;
+			// let csp = 0;
+			let currentSubPicIndex = -1;
 			let sp = 0;
 			while (sp < subPictures.length) {
-				console.log('sp', sp, 'subPictures', subPictures)
 				let subPic = subPictures[sp];
 				let didSplice = false;
 				for (let otherCircle of subPic) {
@@ -73,45 +64,34 @@ class Picture {
 						console.error("same circle?!", circle, otherCircle);
 						continue;
 					}
-					console.log('overlaps', circle.overlaps(otherCircle))
-					console.log('contains 1,2', circle.contains(otherCircle))
-					console.log('contains 2,1', otherCircle.contains(circle))
+					// console.log('overlaps', circle.overlaps(otherCircle))
+					// console.log('contains 1,2', circle.contains(otherCircle))
+					// console.log('contains 2,1', otherCircle.contains(circle))
 					if (circle.overlaps(otherCircle)
 						|| circle.contains(otherCircle)
 						|| otherCircle.contains(circle)) {
-						console.log('in subpic')
 						// circle belongs in same subPic as otherCircle
-						if (!currentSubPic) {
-							console.log('!currentSubPic')
-							currentSubPic = subPic;
+						if (currentSubPicIndex < 0) {
+							currentSubPicIndex = sp;
 							subPic.push(circle);
 						} else {
-							console.log('currentSubPic')
-							currentSubPic = currentSubPic.concat(subPic);
+							subPictures[currentSubPicIndex] = subPictures[currentSubPicIndex].concat(subPic);
 							subPictures.splice(sp, 1);
 							didSplice = true;
 						}
 						break;
 					}
 				}
-				if (!didSplice) {
+				if (!didSplice)
 					sp += 1;
-					console.log('!didSplice')
-				}
-				console.log('sp', sp)
 			}
-			if (!currentSubPic) {
-				console.log('!currentSubPic make a newSubPicture')
+			if (currentSubPicIndex < 0) {
 				// Make a new subpicture
 				let newSubPicture = [circle];
 				subPictures.push(newSubPicture);
 			}
 		}
-		console.log('subPictures', subPictures.length, subPictures)
-
-
-
-
+		console.log(subPictures)
 	}
 }
 
@@ -130,16 +110,13 @@ function setup() {
   picture = new Picture([]);
 }
 
+let radius = 40;
 
 function mouseClicked() {
 	let circleCenter = createVector(mouseX, mouseY)
-	let c = new Circle(circleCenter, 40);
+	let c = new Circle(circleCenter, radius);
 	picture.addCircle(c);
-	console.log('circles:', picture.circles);
-	// picture.draw();
-// }
 
-// function draw() {
 	background(255);
 	fill(0);
 	text(picture.name, 30, 30);
