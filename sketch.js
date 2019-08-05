@@ -49,21 +49,11 @@ function setup() {
 }
 
 
-
-function draw() {
-	// Draw a circle where I click
-	if (mouseIsPressed) {
-		let c = new Circle(mouseX, mouseY, 80);
-		picture.addCircle(c);
-		// Transparent circles with only stroke shown
-		noFill();
-		picture.draw();
-	}
+function mouseClicked() {
+	let c = new Circle(mouseX, mouseY, 80);
+	picture.addCircle(c);
+	noFill();
+	picture.draw();
 	text(picture.name, 30, 30);
 	fill(0);
 }
-
-
-
-
-
