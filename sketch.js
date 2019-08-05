@@ -1,6 +1,8 @@
 /*
 Circle Class
 */
+let circleCenter, circleRadius;
+
 class Circle {
 	// Center is a vector
 	constructor(center, radius) {
@@ -35,7 +37,14 @@ class Picture {
 
 	draw() {
 		noFill();
-		this.circles.forEach((c) => { circle(c.center.x, c.center.y, 2*c.radius) });
+		let hue = 90;
+		for (let subPic of this.subPictures) {
+			hue = (hue + 30) % 255;
+			stroke(hue, 255, 255);
+			for (let c of subPic) {
+				circle(c.center.x, c.center.y, 2*c.radius)
+			}
+		}
 	}
 
 	addCircle(c) {
@@ -50,6 +59,12 @@ class Picture {
 	}
 
 	get name() {
+		// TODO return name
+		// let subPictures = this.subPictures;
+		// console.log(subPictures);
+	}
+
+	get subPictures() {
 		let subPictures = [];
 		for (let circle of this.circles) {
 			// let currentSubPic;
@@ -91,8 +106,9 @@ class Picture {
 				subPictures.push(newSubPicture);
 			}
 		}
-		console.log(subPictures)
+		return subPictures
 	}
+
 }
 
 
@@ -100,8 +116,9 @@ class Picture {
 // Ew global things.  Fix this.
 let picture;
 function setup() {
-  let canvas = createCanvas(800, 800);
+  let canvas = createCanvas(windowWidth, windowHeight);
   canvas.parent('canvas-container');
+  colorMode(HSB, 255);
 
   // Name the picture
   textSize(32);
@@ -110,11 +127,13 @@ function setup() {
   picture = new Picture([]);
 }
 
-let radius = 40;
+function mousePressed() {
+	circleCenter = createVector(mouseX, mouseY);
+}
 
-function mouseClicked() {
-	let circleCenter = createVector(mouseX, mouseY)
-	let c = new Circle(circleCenter, radius);
+function mouseReleased() {
+	circleRadius = circleCenter.dist(createVector(mouseX, mouseY));
+	let c = new Circle(circleCenter, circleRadius);
 	picture.addCircle(c);
 
 	background(255);
