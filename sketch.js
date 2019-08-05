@@ -18,7 +18,7 @@ class Picture {
 	}
 
 	draw() {
-		console.log('circles', this.circles)
+		noFill();
 		this.circles.forEach((c) => { circle(c.centerX, c.centerY, c.radius) });
 	}
 
@@ -29,7 +29,11 @@ class Picture {
 
 	get name() {
 		// TODO: use circles to make name
-		return '1{}';
+		if (this.circles.length > 0) {
+			return this.circles.length + '{}';
+		} else {
+			return '';
+		}
 	}
 }
 
@@ -52,8 +56,13 @@ function setup() {
 function mouseClicked() {
 	let c = new Circle(mouseX, mouseY, 80);
 	picture.addCircle(c);
-	noFill();
+	console.log('circles:', picture.circles);
 	picture.draw();
-	text(picture.name, 30, 30);
+}
+
+function draw() {
+	background(255);
 	fill(0);
+	text(picture.name, 30, 30);
+	picture.draw();
 }
