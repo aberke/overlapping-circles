@@ -1,7 +1,6 @@
 /*
 Circle Class
 */
-let circleCenter, circleRadius;
 
 class Circle {
 	// Center is a vector
@@ -59,9 +58,7 @@ class Picture {
 	}
 
 	get name() {
-		// TODO return name
-		// let subPictures = this.subPictures;
-		// console.log(subPictures);
+		return '1{}'
 	}
 
 	get subPictures() {
@@ -111,10 +108,97 @@ class Picture {
 
 }
 
+function lexSort(unorderedName) {
+	// Return the name with sub-pictures sorted lexicographically 
+	if (unorderedName.length == 0) {
+		return '';
+	}
 
+	let depth = 0;
+	let groups = [];
+	let stack = [];
+
+	for(let j = 0; j < unorderedName.length; j++) {
+		if (unorderedName[j] == '{') {
+			stack.push(j); // record the index where the bracket appeared
+		} 
+		if (unorderedName[j] == '}') {
+			let open = stack.pop();
+			let num = unorderedName[open - 1];
+			let close = j;
+			let parent = stack[stack.length - 1]
+			let depth = stack.length
+			groups.push([num, open, close, parent, depth]);
+		}
+	}
+
+	// sort by overlap num
+	groups = groups.sort(function(a, b) {
+		if (b[0] == undefined) {
+			return 1;
+		} else if (a[0] == undefined) {
+			return -1;
+		}
+		return a[0] - b[0];
+	});
+
+	// sort by parent
+	groups = groups.sort(function(a, b) {
+		if (b[3] == undefined) {
+			return 1;
+		} else if (a[3] == undefined) {
+			return -1;
+		}
+		return a[3] - b[3];
+	});
+
+	console.log(groups);
+
+	class OverlapSpace {
+		constructor(overlapNum) {
+			this.overlapNum = overlapNum;
+			this.children = []
+		}
+	}
+
+	//build a lookuptable
+	let table = Object();
+	for (let space of groups) {
+		let key = space[1];
+		table[key] = new OverlapSpace(space[0]);
+	}
+	console.log(table);
+
+	//build a tree
+	table[undefined] = new OverlapSpace("0")
+	root = table[undefined]
+	console.log('root', root)
+	for (let space of groups) {
+		let key = space[1];
+		let parentKey = space[3];
+		let parent = table[parentKey];
+		let node = table[key];
+		console.log('adding', key, parentKey, parent, node);
+		parent.children.push(node);
+	}
+
+	console.log(root);
+
+	// Traverse tree
+	function print(node) {
+		string = node.overlapNum + '{'
+		for (let child of node.children) {
+			string += print(child);
+		}
+		return string + '}'
+	}
+	console.log(print(root))
+}
 
 // Ew global things.  Fix this.
 let picture;
+let circleCenter, circleRadius;
+
 function setup() {
   let canvas = createCanvas(windowWidth, windowHeight);
   canvas.parent('canvas-container');
@@ -125,6 +209,9 @@ function setup() {
 
   // Make the initial picture
   picture = new Picture([]);
+
+  // Test the lexSort function
+  lexSort('1{}3{}1{5{}2{}1{}}');
 }
 
 function mousePressed() {
