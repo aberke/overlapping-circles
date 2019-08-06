@@ -108,91 +108,82 @@ class Picture {
 
 }
 
-function lexSort(unorderedName) {
-	// Return the name with sub-pictures sorted lexicographically 
+function orderName(unorderedName) {
+	/*
+		Function to perform a lexicographic ordering on a picture's unordered name (in bracket form):
+		2{2{}1{}}1{} will be converted to 1{}2{1{}2{}}
+	*/
+
 	if (unorderedName.length == 0) {
 		return '';
 	}
 
-	let depth = 0;
-	let groups = [];
-	let stack = [];
 
+	/*
+		A tree node that represents a single pair of brackets with a corresponding overlap number (i.e. 2{}).
+	*/
+	class BracketGroup {
+		constructor(overlapNum, parentKey) {
+			this.overlapNum = overlapNum;
+			this.parentKey = parentKey;
+			this.children = [];
+		}
+	}
+
+	let bracketStack = [];
+
+	// Build a lookup table to map the opening bracket index to the BracketGroup object
+	let table = Object();
+	table[undefined] = new BracketGroup("0", null)
+	root = table[undefined]
+
+	// Iterate through each character in the name. 
+	// Note bracket indices and parent bracket indices to build the lookup table.
 	for(let j = 0; j < unorderedName.length; j++) {
 		if (unorderedName[j] == '{') {
-			stack.push(j); // record the index where the bracket appeared
+			// record the index where the bracket appeared
+			bracketStack.push(j); 
 		} 
 		if (unorderedName[j] == '}') {
-			let open = stack.pop();
-			let num = unorderedName[open - 1];
-			let close = j;
-			let parent = stack[stack.length - 1]
-			let depth = stack.length
-			groups.push([num, open, close, parent, depth]);
+			// Use the index of the opening bracket for this set of brackets as its key in the table
+			let openBracket = bracketStack.pop();
+			let num = unorderedName[openBracket - 1];
+			let parentKey = bracketStack[bracketStack.length - 1]
+			table[openBracket] = new BracketGroup(num, parentKey);
 		}
 	}
 
-	// sort by overlap num
-	groups = groups.sort(function(a, b) {
-		if (b[0] == undefined) {
-			return 1;
-		} else if (a[0] == undefined) {
-			return -1;
-		}
-		return a[0] - b[0];
-	});
-
-	// sort by parent
-	groups = groups.sort(function(a, b) {
-		if (b[3] == undefined) {
-			return 1;
-		} else if (a[3] == undefined) {
-			return -1;
-		}
-		return a[3] - b[3];
-	});
-
-	console.log(groups);
-
-	class OverlapSpace {
-		constructor(overlapNum) {
-			this.overlapNum = overlapNum;
-			this.children = []
+	// Give each bracket a parent. It's only fair.
+	let keys = Object.keys(table);
+	for (let key of keys) {
+		let space = table[key];
+		let parent = table[space.parentKey];
+		if (parent) {
+			parent.children.push(space);
 		}
 	}
-
-	//build a lookuptable
-	let table = Object();
-	for (let space of groups) {
-		let key = space[1];
-		table[key] = new OverlapSpace(space[0]);
-	}
-	console.log(table);
-
-	//build a tree
-	table[undefined] = new OverlapSpace("0")
-	root = table[undefined]
-	console.log('root', root)
-	for (let space of groups) {
-		let key = space[1];
-		let parentKey = space[3];
-		let parent = table[parentKey];
-		let node = table[key];
-		console.log('adding', key, parentKey, parent, node);
-		parent.children.push(node);
-	}
-
-	console.log(root);
 
 	// Traverse tree
-	function print(node) {
+	function traverse(node) {
 		string = node.overlapNum + '{'
-		for (let child of node.children) {
-			string += print(child);
+
+		let sortedChildren = node.children.sort(function(a, b) {
+			if (b.overlapNum == undefined) {
+				return 1;
+			} else if (a.overlapNum == undefined) {
+				return -1;
+			}
+			return a.overlapNum - b.overlapNum;
+		});
+
+		for (let child of sortedChildren) {
+			string += traverse(child);
 		}
 		return string + '}'
 	}
-	console.log(print(root))
+
+	// Return the reordered name
+	return traverse(root);
 }
 
 // Ew global things.  Fix this.
@@ -210,8 +201,8 @@ function setup() {
   // Make the initial picture
   picture = new Picture([]);
 
-  // Test the lexSort function
-  lexSort('1{}3{}1{5{}2{}1{}}');
+  // Test the lexicographic ordering function
+  console.log(orderName('1{}3{}2{2{}1{}}1{}'));
 }
 
 function mousePressed() {
