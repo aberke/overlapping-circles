@@ -37,11 +37,19 @@ class Picture {
 	draw() {
 		noFill();
 		let hue = 90;
-		for (let subPic of this.subPictures) {
+		let subPictures = this.subPictures;
+		let graphs = this.subgraphs();
+		for (let i = 0; i < subPictures.length; i ++) {
+			let subPic = subPictures[i];
+			let graph = graphs[i];
 			hue = (hue + 30) % 255;
 			stroke(hue, 255, 255);
 			for (let c of subPic) {
 				circle(c.center.x, c.center.y, 2*c.radius)
+			}
+			
+			for (let e of graph) {
+				line(e[0].center.x, e[0].center.y, e[1].center.x, e[1].center.y);
 			}
 		}
 	}
@@ -115,7 +123,6 @@ class Picture {
 		if (unorderedName.length == 0) {
 			return '';
 		}
-
 		
 		// A tree node that represents a single pair of brackets with a corresponding overlap number (i.e. 2{}).
 		class BracketGroup {
@@ -181,6 +188,27 @@ class Picture {
 		// Return the reordered name
 		return traverse(root);
 	}
+
+	subgraphs () {
+		let graphs = [];
+		for (let sp of this.subPictures) {
+			let graph = [];
+			for (let circle of sp) {
+				for (let otherCircle of sp) {
+					if (circle.isSameCircle(otherCircle)) {
+						continue;
+					}
+					if (circle.overlaps(otherCircle)) {
+						graph.push([circle, otherCircle]);
+						stroke(0, 255, 255);
+					}
+				}
+			}
+			graphs.push(graph);
+			console.log('sp', graph);
+		}
+		return graphs;
+	}
 }
 
 // Ew global things.  Fix this.
@@ -215,4 +243,5 @@ function mouseReleased() {
 	fill(0);
 	text(picture.name, 30, 30);
 	picture.draw();
+	graphs = picture.subgraphs()
 }
