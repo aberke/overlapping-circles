@@ -26,6 +26,33 @@ class Circle {
 	}
 }
 
+
+
+class Arc {
+	/*
+	circle := Circle(center{x,y}, radius)
+	angleRange := (radians, radians)
+	*/
+	constructor(circle, angleRange) {
+		this.circle = circle;
+		this.angleRange = angleRange;
+	}
+}
+
+class Space {
+	/*
+	innerArcs :[]
+	outterArcs: []
+	*/
+	constructor(innerArcs, outterArcs) {
+		this.innerArcs = innerArcs;
+		this.outterArcs = outterArcs;
+	}
+	get overlapNum() {
+		return innerArcs.length;
+	}
+}
+
 /*
 Picture Class
 */
@@ -37,10 +64,11 @@ class Picture {
 	draw() {
 		noFill();
 		let hue = 90;
-		for (let subPic of this.subPictures) {
+		let subPics = this.subPictures;
+		for (let subPic of subPics) {
 			hue = (hue + 30) % 255;
 			stroke(hue, 255, 255);
-			for (let c of subPic) {
+			for (let c of subPic.circles) {
 				circle(c.center.x, c.center.y, 2*c.radius)
 			}
 		}
@@ -71,7 +99,7 @@ class Picture {
 			while (sp < subPictures.length) {
 				let subPic = subPictures[sp];
 				let didSplice = false;
-				for (let otherCircle of subPic) {
+				for (let otherCircle of subPic.circles) {
 					if (circle.isSameCircle(otherCircle)) {
 						console.error("same circle?!", circle, otherCircle);
 						continue;
@@ -85,9 +113,11 @@ class Picture {
 						// circle belongs in same subPic as otherCircle
 						if (currentSubPicIndex < 0) {
 							currentSubPicIndex = sp;
-							subPic.push(circle);
+							subPic.addCircle(circle);
 						} else {
-							subPictures[currentSubPicIndex] = subPictures[currentSubPicIndex].concat(subPic);
+							for (let c of subPic.circles) {
+								subPictures[currentSubPicIndex].addCircle(c);
+							}
 							subPictures.splice(sp, 1);
 							didSplice = true;
 						}
@@ -99,7 +129,7 @@ class Picture {
 			}
 			if (currentSubPicIndex < 0) {
 				// Make a new subpicture
-				let newSubPicture = [circle];
+				let newSubPicture = new Picture([circle]);
 				subPictures.push(newSubPicture);
 			}
 		}
