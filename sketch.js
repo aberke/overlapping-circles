@@ -24,6 +24,34 @@ class Circle {
 	contains(otherCircle) {
 		return this.center.dist(otherCircle.center) < (this.radius - otherCircle.radius);
 	}
+
+	intersection(otherCircle) {
+
+		if (this.isSameCircle(otherCircle) || this.contains(otherCircle)) {
+			return [];
+		}
+
+		let D = this.center.dist(otherCircle.center);
+
+		let x1 = this.center.x;
+		let y1 = this.center.y;
+		let x2 = otherCircle.center.x;
+		let y2 = otherCircle.center.y;
+
+		let rs = this.radius**2 - otherCircle.radius**2;
+		let ra = this.radius**2 + otherCircle.radius**2;
+
+		let eq1 = (a, b) => (1/2 * (a + b)) + (rs / (2 * D**2) * (b - a))
+		let root = Math.sqrt(2 * (ra / D**2) - (rs ** 2 / D**4) - 1)
+
+		let points = [createVector(0, 0), createVector(0, 0)];
+		points[0].x = eq1(x1, x2) + 1/2 * root * (y2 - y1);
+		points[1].x = eq1(x1, x2) - 1/2 * root * (y2 - y1);
+		points[0].y = eq1(y1, y2) + 1/2 * root * (x1 - x2);
+		points[1].y = eq1(y1, y2) - 1/2 * root * (x1 - x2);
+
+		return points;
+	}
 }
 
 
@@ -68,8 +96,18 @@ class Picture {
 		for (let subPic of subPics) {
 			hue = (hue + 30) % 255;
 			stroke(hue, 255, 255);
-			for (let c of subPic.circles) {
-				circle(c.center.x, c.center.y, 2*c.radius)
+			for (let c1 of subPic.circles) {
+
+				strokeWeight(1);
+				circle(c1.center.x, c1.center.y, 2*c1.radius)
+
+				strokeWeight(7);
+				for (let c2 of subPic.circles) {
+					let pts = c1.intersection(c2);
+					for (let pt of pts) {
+						point(pt.x, pt.y);
+					}
+				}
 			}
 		}
 	}
