@@ -65,6 +65,25 @@ class Arc {
 		this.circle = circle;
 		this.angleRange = angleRange;
 	}
+
+	pointToAngle(point) {
+		// Note that converting from angles to points and back is only precise to about 2.1e-8 pixels
+		return Math.acos((point.x - this.circle.center.x) / this.circle.radius);
+	}
+
+	angleToPoint(angle) {
+		return createVector(
+			this.circle.center.x + this.circle.radius * Math.cos(angle),
+			this.circle.center.y + this.circle.radius * Math.sin(angle)
+		);
+	}
+
+	get endpoints() {
+		// TODO figure out if this is a good idea to use...
+		// Could be expensive to compute this everytime we need these
+		let pts = [this.angleToPoint(this.angleRange[0]), this.angleToPoint(this.angleRange[1])];
+		return pts
+	}
 }
 
 class Space {
@@ -89,7 +108,7 @@ class Picture {
 		this.circles = circles;
 	}
 
-	draw() {
+	draw(drawPoints) {
 		noFill();
 		let hue = 90;
 		let subPics = this.subPictures;
@@ -101,11 +120,15 @@ class Picture {
 				strokeWeight(1);
 				circle(c1.center.x, c1.center.y, 2*c1.radius)
 
-				strokeWeight(7);
-				for (let c2 of subPic.circles) {
-					let pts = c1.intersection(c2);
-					for (let pt of pts) {
-						point(pt.x, pt.y);
+				if (drawPoints) {
+					strokeWeight(4);
+					point(c1.center.x, c1.center.y);
+					strokeWeight(7);
+					for (let c2 of subPic.circles) {
+						let pts = c1.intersection(c2);
+						for (let pt of pts) {
+							point(pt.x, pt.y);
+						}
 					}
 				}
 			}
@@ -282,5 +305,5 @@ function mouseReleased() {
 	background(255);
 	fill(0);
 	text(picture.name, 30, 30);
-	picture.draw();
+	picture.draw(true);
 }
