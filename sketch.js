@@ -25,7 +25,7 @@ class Circle {
 		return this.center.dist(otherCircle.center) < (this.radius - otherCircle.radius);
 	}
 
-	intersection(otherCircle) {
+	intersections(otherCircle) {
 
 		if (this.isSameCircle(otherCircle) || this.contains(otherCircle)) {
 			return [];
@@ -82,8 +82,86 @@ class Arc {
 		// TODO figure out if this is a good idea to use...
 		// Could be expensive to compute this everytime we need these
 		let pts = [this.angleToPoint(this.angleRange[0]), this.angleToPoint(this.angleRange[1])];
-		return pts
+		return pts;
 	}
+
+
+	get intersections(otherArc) {
+		this.circle.intersections(otherArc.circle);
+	}
+
+	angleIsInRange(angle) {
+		angle = angle % 2*Math.PI; // just in case we are bad at coding
+		// Angles are always stored in clockwise direction [first encountered angle, second angle]
+		let ar0 = this.angleRange[0];
+		let ar1 = this.angleRange[1];
+		if (ar0 < ar1) // normal case
+			return ((ar0 < angle) && (angle < ar1));
+		// else (ar0 > ar1) happens when angle range wraps around 2PI / 0
+		// check if angle between ar0 and 2PI and then check if between 0 and ar1
+		return ((ar0 < angle) || (angle < ar1));
+	}
+
+	break(otherArc) {
+		// Returns a list of arcs that this arc is broken into
+
+		// Break this arc apart by the otherArc iff the otherArc intersects this arc
+		let intersections = this.intersections(otherArc);
+		if (intersections.length == 1 || intersections.length > 2) {
+			console.error('Broken function!!');
+		}
+		if (intersections.length == 0)
+			return [this];
+
+		let intersection0 = intersections[0];
+		let intersection1 = intersections[1];
+		let angle0 = this.pointToAngle(intersection0);
+		let angle1 = this.pointToAngle(intersection1);
+
+
+		if (this.angleIsInRange(angle0) && this.angleIsInRange(angle1)) {
+			// The other Arc intersects this arc twice, so we will return 3 arcs
+			let orderedAngleList;
+			let lesserAngle, greaterAngle;
+			if (angle0 <= angle1) {
+				lesserAngle = angle0;
+				greaterAngle = angle1;
+			} else {
+				lesserAngle = angle1;
+				greaterAngle = angle0;
+			}
+			// check if the angles wrap around 2PI / 0
+			if ((greater > this.angleRange[0]) && (lesserAngle <= this.angleRange[0])) {
+				orderedAngleList = [greaterAngle, lesserAngle];
+			} else { 
+				// normal case
+				orderedAngleList = [lesserAngle, greaterAngle];
+			}
+			return [
+				new Arc(this.circle, [this.angleRange[0], orderedAngleList[0]]),
+				new Arc(this.circle, [orderedAngleList[0], orderedAngleList[1]]),
+				new Arc(this.circle, [orderedAngleList[1], this.angleRange[1]]),
+			];
+		}
+		// otherwise we return 2 arcs because one of the angles is not in the range
+		if (this.angleIsInRange(angle0)) {
+			// we create 2 new arcs
+			return [
+				new Arc(this.circle, [this.angleRange[0], angle0]),
+				new Arc(this.circle, [angle0, this.angleRange[1]]),
+			];
+		}
+		if (this.angleIsInRange(angle1)) {
+			// we create 2 new arcs
+			return [
+				new Arc(this.circle, [this.angleRange[0], angle1]),
+				new Arc(this.circle, [angle1, this.angleRange[1]]),
+			];
+		}
+		// Otherwise these arcs did not intersect (though their circles may still have intersected)
+		return [];
+	}
+
 }
 
 class Space {
@@ -91,7 +169,7 @@ class Space {
 	innerArcs :[]
 	outterArcs: []
 	*/
-	constructor(innerArcs, outterArcs) {
+	constructor(innerArcs=[], outterArcs=[]) {
 		this.innerArcs = innerArcs;
 		this.outterArcs = outterArcs;
 	}
@@ -107,6 +185,73 @@ class Picture {
 	constructor(circles) {
 		this.circles = circles;
 	}
+
+	get spaces() {
+		// Returns a list of found spaces
+		// each space starts as a circle from the (sub)picture
+		// that is then divided by the other circles it intersects
+		let foundSpaces = [];
+		// There is a working spacesQueue that contains each of the
+		// spaces that need to be further broken down to a final foundSpace
+		// the SpacesQueue is initialized with all of the circles in the subpicture
+		// The initial spaces in the queue contain full circles as one innerArc
+		let spacesQueue = [];
+		// initialize the queue
+		for (let circle of this.circles) {
+			let space = new Space([new Arc(circle, [0, 2*Math.PI], [])]);
+			spacesQueue.push(space);
+		}
+		// spacesQueue has been initialized
+		while (spacesQueue.length > 0) {
+			// There are spaces we will create for the next iteration of this loop
+			// they go in the nextQueue and they are added to the spacesQueue at the
+			// end of this iteration of the loop
+			let nextQueue = [];
+			// dequeue
+			let workingSpace = spacesQueue.shift();
+			// For each of the other items in the SpacesQueue, see how they overlap
+			// with the workingSpace and break down the working space
+			for (let otherSpace of spacesQueue) {
+				// create the new space that might result from the overlap
+				// between working and other space
+				// if it has arcs it will end up in the nextQueue.
+				let newSpace = new Space();
+				// check both the inner and outter arcs of the other space for overlaps
+				for (let otherInnerArc of otherSpace.innerArcs) {
+					for (let workingInnerArc of workingSpace.innerArcs) {
+						let intersections = workingInnerArc.intersections(otherInnerArc);
+						if (intersections.length == 0) // They do not intersect
+							continue;
+
+						// first get the angles for the workingInnerArc
+						let angle0 = workingInnerArc.pointToAngle(intersections[0]);
+						let angle1 = workingInnerArc.pointToAngle(intersections[1]);
+
+
+
+
+
+
+
+
+					}
+
+
+
+
+
+
+
+
+
+				}
+			}
+		}
+	}
+
+
+
+
 
 	draw(drawPoints) {
 		noFill();
