@@ -66,6 +66,10 @@ class Arc {
 		this.angleRange = angleRange;
 	}
 
+	get isEmpty() {
+		return ((this.innerArcs.length == 0) && (this.outterArcs.length == 0));
+	}
+
 	pointToAngle(point) {
 		// Note that converting from angles to points and back is only precise to about 2.1e-8 pixels
 		return Math.acos((point.x - this.circle.center.x) / this.circle.radius);
@@ -86,7 +90,7 @@ class Arc {
 	}
 
 
-	get intersections(otherArc) {
+	getIntersections(otherArc) {
 		this.circle.intersections(otherArc.circle);
 	}
 
@@ -106,7 +110,7 @@ class Arc {
 		// Returns a list of arcs that this arc is broken into
 
 		// Break this arc apart by the otherArc iff the otherArc intersects this arc
-		let intersections = this.intersections(otherArc);
+		let intersections = this.getIntersections(otherArc);
 		if (intersections.length == 1 || intersections.length > 2) {
 			console.error('Broken function!!');
 		}
@@ -159,7 +163,7 @@ class Arc {
 			];
 		}
 		// Otherwise these arcs did not intersect (though their circles may still have intersected)
-		return [];
+		return [this];
 	}
 
 }
@@ -209,43 +213,159 @@ class Picture {
 			let nextQueue = [];
 			// dequeue
 			let workingSpace = spacesQueue.shift();
+
+
 			// For each of the other items in the SpacesQueue, see how they overlap
 			// with the workingSpace and break down the working space
 			for (let otherSpace of spacesQueue) {
+
 				// create the new space that might result from the overlap
 				// between working and other space
 				// if it has arcs it will end up in the nextQueue.
 				let newSpace = new Space();
 				// check both the inner and outter arcs of the other space for overlaps
 				for (let otherInnerArc of otherSpace.innerArcs) {
+
+					// The list of arcs is going to change throughout this loop
+					let newWorkingSpaceInnerArcs = [];
+					let newWorkingSpaceOutterArcs = [];
+
+
 					for (let workingInnerArc of workingSpace.innerArcs) {
-						let intersections = workingInnerArc.intersections(otherInnerArc);
-						if (intersections.length == 0) // They do not intersect
-							continue;
 
-						// first get the angles for the workingInnerArc
-						let angle0 = workingInnerArc.pointToAngle(intersections[0]);
-						let angle1 = workingInnerArc.pointToAngle(intersections[1]);
+						let workingArcPieces = workingInnerArc.break(otherInnerArc);
+						// arcPieces has 1, 2, or 3 pieces in it
+						for (let workingArcPiece of workingArcPieces) {
+							// If the arc piece is contained in the other arc's circle,
+							// then it belongs to the new space.
+							// Otherwise it belongs to the working space
+							let workingArcPieceMidpoint = workingArcPiece.midpoint; // TODO: right this function
+							if (otherInnerArc.circle.containsPoint(workingArcPieceMidpoint)) {
+								// this arc piece belongs to the new space
+								// as an inner arc (right? because it was an inner arc before)
+								newSpace.innerArcs.push(workingArcPiece);
+							} else {
+								newWorkingSpaceInnerArcs.push(workingArcPiece);
+							}
+						}
 
-
-
-
-
-
-
-
+						let otherArcPieces = otherInnerArc.break(workingInnerArc);
+						for (let otherArcPiece of otherArcPieces) {
+							let otherArcPieceMidpoint = otherArcPiece.midpoint();
+							if (workingInnerArc.circle.containsPoint(otherArcPieceMidpoint)) {
+								newSpace.innerArcs.push(otherArcPiece);
+								newWorkingSpaceOutterArcs.push(otherArcPiece);
+							}
+						}
 					}
 
+					for (let workingOutterArc of workingSpace.outterArcs) {
+						let workingArcPieces = workingOutterArc.break(otherInnerArc);
+						// arcPieces has 1, 2, or 3 pieces in it
+						for (let workingArcPiece of workingArcPieces) {
+							// If the arc piece is contained in the other arc's circle,
+							// then it belongs to the new space.
+							// Otherwise it belongs to the working space
+							let workingArcPieceMidpoint = workingArcPiece.midpoint; // TODO: right this function
+							if (otherInnerArc.circle.containsPoint(workingArcPieceMidpoint)) {
+								// this arc piece belongs to the new space
+								newSpace.outterArcs.push(workingArcPiece);
+							} else {
+								newWorkingSpaceOutterArcs.push(workingArcPiece);
+							}
+						}
+
+						let otherArcPieces = otherInnerArc.break(workingOutterArc);
+						for (let otherArcPiece of otherArcPieces) {
+							let otherArcPieceMidpoint = otherArcPiece.midpoint;
+							if (!workingOutterArc.circle.containsPoint(otherArcPieceMidpoint)) {
+								newSpace.innerArcs.push(otherArcPiece);
+								// is this always right?? // TODO(alex): think about this
+								newWorkingSpaceOutterArcs.push(otherArcPiece);
+							}
+						}
+
+					}
+					workingSpace.innerArcs = newWorkingSpaceInnerArcs;
+					workingSpace.outterArcs = newWorkingSpaceOutterArcs;
+				}
 
 
+				// We are now looking at the OUTTER arcs of the other space
+				for (let otherOutterArc of otherSpace.outterArcs) {
+
+					// The list of arcs is going to change throughout this loop
+					let newWorkingSpaceInnerArcs = [];
+					let newWorkingSpaceOutterArcs = [];
 
 
+					for (let workingInnerArc of workingSpace.innerArcs) {
 
+						let workingArcPieces = workingInnerArc.break(otherOutterArc);
+						// arcPieces has 1, 2, or 3 pieces in it
+						for (let workingArcPiece of workingArcPieces) {
+							// If the arc piece is contained in the other arc's circle,
+							// then it belongs to the new space.
+							// Otherwise it belongs to the working space
+							let workingArcPieceMidpoint = workingArcPiece.midpoint; // TODO: right this function
+							if (otherOutterArc.circle.containsPoint(workingArcPieceMidpoint)) {
+								// this arc piece belongs to the new space
+								// as an inner arc (right? because it was an inner arc before)
+								newSpace.innerArcs.push(workingArcPiece);
+							} else {
+								newWorkingSpaceInnerArcs.push(workingArcPiece);
+							}
+						}
 
+						let otherArcPieces = otherInnerArc.break(workingInnerArc);
+						for (let otherArcPiece of otherArcPieces) {
+							let otherArcPieceMidpoint = otherArcPiece.midpoint;
+							if (workingInnerArc.circle.containsPoint(otherArcPieceMidpoint)) {
+								newSpace.innerArcs.push(otherArcPiece);
+								newWorkingSpaceOutterArcs.push(otherArcPiece);
+							}
+						}
+					}
 
+					for (let workingOutterArc of workingSpace.outterArcs) {
+						let workingArcPieces = workingOutterArc.break(otherOutterArc);
+						// arcPieces has 1, 2, or 3 pieces in it
+						for (let workingArcPiece of workingArcPieces) {
+							// If the arc piece is contained in the other arc's circle,
+							// then it belongs to the new space.
+							// Otherwise it belongs to the working space
+							let workingArcPieceMidpoint = workingArcPiece.midpoint; // TODO: right this function
+							if (otherOutterArc.circle.containsPoint(workingArcPieceMidpoint)) {
+								newWorkingSpaceOutterArcs.push(workingArcPiece);
+							} else {
+								newSpace.outterArcs.push(workingArcPiece);
+							}
+						}
 
+						let otherArcPieces = otherInnerArc.break(workingOutterArc);
+						for (let otherArcPiece of otherArcPieces) {
+							let otherArcPieceMidpoint = otherArcPiece.midpoint;
+							if (!workingOutterArc.circle.containsPoint(otherArcPieceMidpoint)) {
+								newSpace.outterArcs.push(otherArcPiece);
+								// TODO(alex): figure this out
+								newWorkingSpaceInnerArcs.push(otherArcPiece);
+							}
+						}
+
+					}
+					workingSpace.innerArcs = newWorkingSpaceInnerArcs;
+					workingSpace.outterArcs = newWorkingSpaceOutterArcs;
 				}
 			}
+			// TODO: add check that space is not already in queue
+			let isInQueue = false;
+			if (!newSpace.isEmpty && !isInqueue()) {
+				nextQueue.push(newSpace);
+			}
+		}
+		// TODO: add check that space is not already in queue
+		if (!isInqueue()) {
+			foundSpaces.push(workingSpace);
 		}
 	}
 
@@ -270,7 +390,7 @@ class Picture {
 					point(c1.center.x, c1.center.y);
 					strokeWeight(7);
 					for (let c2 of subPic.circles) {
-						let pts = c1.intersection(c2);
+						let pts = c1.intersections(c2);
 						for (let pt of pts) {
 							point(pt.x, pt.y);
 						}
