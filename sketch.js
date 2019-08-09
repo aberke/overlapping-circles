@@ -344,6 +344,7 @@ class Picture {
 
 						let otherArcPieces = otherInnerArc.break(workingOutterArc);
 						for (let otherArcPiece of otherArcPieces) {
+							alert('figure me out!')
 							let otherArcPieceMidpoint = otherArcPiece.midpoint;
 							if (!workingOutterArc.circle.containsPoint(otherArcPieceMidpoint)) {
 								newSpace.outterArcs.push(otherArcPiece);
@@ -368,8 +369,6 @@ class Picture {
 			foundSpaces.push(workingSpace);
 		}
 	}
-
-
 
 
 
