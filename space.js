@@ -30,12 +30,13 @@ class Space {
 		return true;
 	}
 
-	draw(translation) {
+	draw(translation, scale) {
 		for (let a of this.innerArcs) {
-			a.draw(translation)
+			a.draw(translation, scale)
 		}
 		for (let a of this.outerArcs) {
-			a.draw(translation);
+			console.log('drawing arc', a)
+			a.draw(translation, scale);
 		}
 	}
 

@@ -31,14 +31,19 @@ function mouseReleased() {
 	background(255);
 	fill(0);
 	text(picture.name, 30, 30);
+	noFill();
 	picture.draw(true);
 
-	let translation = createVector(0, 200);
+	let translation = createVector(0, 400);
 	let hue = 0;
+	strokeWeight(1);
+	let corner = createVector(0, windowHeight);
+	let scale = 1;
 	for (let subPic of picture.subPictures) {
 		for (let space of subPic.spaces) {
 			stroke(color((hue+=15)%255, 255, 255));
-			space.draw(translation);
+			space.draw(translation, scale);
+			translation.x += 300;
 		}
 	}
 }

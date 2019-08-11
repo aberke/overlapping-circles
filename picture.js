@@ -8,6 +8,7 @@ class Picture {
 	}
 
 	get spaces() {
+		console.log('---in space---')
 		// Returns a list of found spaces
 		// each space starts as a circle from the (sub)picture
 		// that is then divided by the other circles it intersects
@@ -68,9 +69,12 @@ class Picture {
 						}
 
 						let otherArcPieces = otherInnerArc.break(workingInnerArc);
+						console.log('otherArcPieces', otherArcPieces)
 						for (let otherArcPiece of otherArcPieces) {
 							let otherArcPieceMidpoint = otherArcPiece.midpoint;
+							console.log('otherArcPieceMidpoint', otherArcPieceMidpoint)
 							if (workingInnerArc.circle.containsPoint(otherArcPieceMidpoint)) {
+								console.log('contained', otherArcPiece)
 								newSpace.innerArcs.push(otherArcPiece);
 								newWorkingSpaceOuterArcs.push(otherArcPiece);
 							}
@@ -111,6 +115,7 @@ class Picture {
 
 				// We are now looking at the OUTTER arcs of the other space
 				for (let otherOuterArc of otherSpace.outerArcs) {
+					console.log('in otherOuter')
 
 					// The list of arcs is going to change throughout this loop
 					let newWorkingSpaceInnerArcs = [];
@@ -175,17 +180,19 @@ class Picture {
 					}
 					workingSpace.innerArcs = newWorkingSpaceInnerArcs;
 					workingSpace.outerArcs = newWorkingSpaceOuterArcs;
+
 				}
 				// Check if the space is already in the nextQueue, spacesQueue
 				if (!newSpace.isEmpty && !newSpace.isInArray(nextQueue) && !newSpace.isInArray(spacesQueue)) {
 					nextQueue.push(newSpace);
 				}
 			}
-
+			console.log('working space', workingSpace)
 			if (!workingSpace.isInArray(foundSpaces)) {
 				foundSpaces.push(workingSpace);
 			}
-
+			if(nextQueue.length > 0)
+				console.log('nextQueue', nextQueue[0])
 			// spacesQueue = spacesQueue.concat(nextQueue);
 		}
 

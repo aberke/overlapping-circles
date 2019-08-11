@@ -25,7 +25,11 @@ class Arc {
 
 	pointToAngle(point) {
 		// Note that converting from angles to points and back is only precise to about 2.1e-8 pixels
-		return Math.acos((point.x - this.circle.center.x) / this.circle.radius);
+		let angle =  Math.acos((point.x - this.circle.center.x) / this.circle.radius);
+		if (this.circle.center.y > point.y) {
+			angle = 2 * Math.PI - angle;
+		}
+		return angle;
 	}
 
 	angleToPoint(angle) {
@@ -110,6 +114,13 @@ class Arc {
 				// normal case
 				orderedAngleList = [lesserAngle, greaterAngle];
 			}
+			if (this.angleRange[0] % (2 * Math.PI) == 0 && this.angleRange[1] % (2 * Math.PI) == 0) {
+				console.log('breaking circle for the first time!')
+				return [
+					new Arc(this.circle, [orderedAngleList[0], orderedAngleList[1]]),
+					new Arc(this.circle, [orderedAngleList[1], orderedAngleList[0]]),
+				];
+			}
 			return [
 				new Arc(this.circle, [this.angleRange[0], orderedAngleList[0]]),
 				new Arc(this.circle, [orderedAngleList[0], orderedAngleList[1]]),
@@ -135,8 +146,8 @@ class Arc {
 		return [this];
 	}
 
-	draw(translation) {
-		let diam = this.circle.radius;
+	draw(translation, scale) {
+		let diam = 2 * this.circle.radius * scale;
 		arc(this.circle.center.x + translation.x, this.circle.center.y + translation.y, diam, diam, this.angleRange[0], this.angleRange[1]);
 	}
 }
